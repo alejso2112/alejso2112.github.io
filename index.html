@@ -4,7 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>IMPACTA CRM | Revenue Engine</title>
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     :root{
       --brand:#0c62ab; --brand-dark:#094a80; --ink:#0f172a; --muted:#64748b;
@@ -14,7 +16,6 @@
     *{box-sizing:border-box}
     body{ margin:0; font-family:var(--sans); color:var(--ink); background: var(--bg); line-height:1.5; font-size: 14px; }
     
-    /* Layout Utilities */
     .hide { display: none !important; }
     .wrap { max-width:1800px; margin:0 auto; padding:0 24px; }
     .flex-center { display: flex; align-items: center; justify-content: center; height: 100vh; }
@@ -22,13 +23,13 @@
     /* Auth Screen */
     .auth-box { background: #fff; padding: 40px; border-radius: var(--radius); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .auth-box img { height: 50px; margin-bottom: 20px; }
-    .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 8px; }
+    .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; }
     
     /* Admin Panel */
     .admin-bar { background: #1e293b; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
     .admin-tools { background: #fff; padding: 24px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--line); }
 
-    /* Original CSS */
+    /* UI Elements */
     a{color:var(--brand); text-decoration:none}
     .topbar{ position:sticky; top:0; z-index:50; border-bottom:1px solid var(--line); background:rgba(255,255,255,.98); backdrop-filter:blur(10px); }
     .topbar .inner{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; }
@@ -56,16 +57,13 @@
     .divider{height:1px; background:rgba(255,255,255,0.2); margin:20px 0}
     label{display:block; font-size:13px; font-weight:600; color:#fff; margin:0 0 6px; letter-spacing: 0.01em;}
 
-    /* Inputs */
     .row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
     .row.one{grid-template-columns:1fr}
     input, select, textarea{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.4); background:#fff; color:var(--ink); outline:none; font-family:var(--sans); font-size:14px; transition: border-color .15s, box-shadow .15s; }
-    input::placeholder, textarea::placeholder { color: #94a3b8; }
     input:focus, select:focus, textarea:focus{ border-color: #fff; box-shadow:0 0 0 3px rgba(255,255,255,0.25); }
     textarea{min-height:90px; resize:vertical}
     .actions{display:flex; flex-wrap:wrap; gap:12px; margin-top:24px}
 
-    /* Chips & KPI */
     .pill{ display:inline-block; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; text-align: center; line-height: 1.2; }
     .pill.stage{background:#e0f2fe; color:#0369a1;}
     .pill.disq{background:#fee2e2; color:#b91c1c;}
@@ -77,7 +75,6 @@
     .kpi .box .label{font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;}
     .kpi .box .value{font-size:22px; font-weight:800; color:var(--ink); margin-top:4px}
 
-    /* Filters & Table */
     .filters{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:24px; padding:16px; background:#fff; border-radius:10px; border:1px solid var(--line); }
     .filters label{ color:var(--muted); margin-bottom: 4px; font-size:12px;} 
     .filters input, .filters select { border-color: var(--line); }
@@ -96,7 +93,6 @@
     .mini:hover{border-color:var(--brand); color:var(--brand);}
     .mini.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
 
-    /* Modals */
     .modal{ position:fixed; inset:0; background:rgba(15,23,42,.7); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; padding:20px; z-index:100; }
     .modal.open{display:flex}
     .modal .panel{ width:min(1200px, 95%); height: 90vh; background:#f8fafc; border-radius:16px; border: 1px solid var(--line); box-shadow:0 30px 60px -12px rgba(0,0,0,0.25); color: var(--ink); display: flex; flex-direction: column; overflow: hidden; }
@@ -109,7 +105,7 @@
     #editModal .bd { padding: 24px; overflow-y: auto;}
     #editModal label { color: var(--ink); }
 
-    /* Modal Body Grid */
+    /* Modal Grid */
     .modal .panel .bd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1 1 auto; overflow: hidden; }
     .modal-col { padding: 24px; overflow-y: auto; }
     .modal-col.left { border-right: 1px solid var(--line); }
@@ -120,4 +116,676 @@
     }
 
     .status-bar { padding: 12px 24px; background: #eef2ff; border-bottom: 1px solid var(--line); display: flex; gap: 32px; align-items: center; flex: 0 0 auto; }
-    .status-group { display: flex; flex-direction: column;
+    .status-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .status-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+    
+    #m_stage { background: transparent; border: none; font-size: 18px; font-weight: 800; color: var(--brand); padding: 0; margin: 0; width: 100%; cursor: default; text-transform: uppercase; }
+    #m_nextAction { background: #fff; border: 2px solid #10b981; color: #064e3b; font-weight: 600; text-transform: uppercase; }
+    
+    .modal-grid label { color: var(--muted); }
+    .modal-grid input, .modal-grid select, .modal-grid textarea { border: 1px solid var(--line); background: #ffffff; color: var(--ink); }
+    .modal .tablewrap { background: #ffffff; color: var(--ink); border: 1px solid var(--line); }
+    .modal .tablewrap th { background: #f1f5f9; color: var(--muted); }
+    
+    .call-controls { background: #fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.03); }
+    .timer { font-family:ui-monospace, monospace; font-size:24px; font-weight:700; color:var(--brand); }
+    .timer.active { color:#b91c1c; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%{opacity:1} 50%{opacity:0.6} 100%{opacity:1} }
+    
+    .quick-actions button.selected { background: var(--brand); color:#fff; border-color:var(--brand); }
+
+    .toast{ position:fixed; right:24px; bottom:24px; background:#1e293b; color:#fff; border-radius:8px; padding:12px 16px; display:none; max-width:300px; z-index:200; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); }
+    .toast.show{display:block; animation:slideIn 0.3s ease-out;}
+    @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  </style>
+</head>
+
+<body>
+
+  <div id="authView" class="flex-center">
+    <div class="auth-box">
+      <img src="img/logo-main-2025.png" alt="IMPACTA" />
+      <h2 style="font-size:20px; margin-bottom:24px; color:var(--brand-dark);">CRM Login</h2>
+      <input type="email" id="loginEmail" class="auth-input" placeholder="Email" />
+      <input type="password" id="loginPass" class="auth-input" placeholder="Password" />
+      <button class="btn" id="btnLogin" onclick="handleLogin()" style="width:100%; margin-top:10px;">Sign In</button>
+      <div id="loginMsg" style="margin-top:12px; color:#b91c1c; font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div id="appView" class="hide">
+    
+    <div id="adminBar" class="admin-bar hide">
+      <span style="font-weight:700; font-size:13px; letter-spacing:1px; color:#94a3b8;">ADMIN MODE</span>
+      <button class="btn secondary" style="font-size:11px; padding:4px 10px;" onclick="toggleAdminPanel()">Toggle Admin Tools</button>
+    </div>
+
+    <div class="topbar">
+      <div class="wrap">
+        <div class="inner">
+          <div class="brand">
+            <img src="img/logo-main-2026.png" class="logo" alt="IMPACTA" />
+            <div>
+              <h1>IMPACTA Business Solutions</h1>
+              <p>Quick CRM — Connected to Supabase</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <span id="userDisplay" style="font-size:12px; color:var(--muted); margin-right:12px;"></span>
+            <button class="btn" id="btnCreateNew">Create Lead</button>
+            <div style="width:1px; height:24px; background:var(--line); margin:0 8px;"></div>
+            <button class="btn secondary" onclick="handleLogout()">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="wrap">
+      
+      <div id="adminPanel" class="admin-tools hide">
+        <h3 style="margin-top:0; color:var(--brand);">Admin Operations</h3>
+        <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <div>
+            <h4 style="margin-top:0;">1. Create User</h4>
+            <input type="email" id="newUserEmail" placeholder="New User Email" class="auth-input">
+            <input type="password" id="newUserPass" placeholder="Temporary Password" class="auth-input">
+            <button class="btn success" onclick="adminCreateUser()">Create User</button>
+            <p class="hint" style="color:var(--muted); margin-top:8px;">*User will appear in dropdown below after refresh.</p>
+          </div>
+          <div>
+            <h4 style="margin-top:0;">2. Import Leads (CSV)</h4>
+            <label style="color:#000;">Assign To:</label>
+            <select id="assignToSelect" class="auth-input" style="background:#f8fafc;"></select>
+            <textarea id="csvInput" placeholder="Paste CSV here (Company, Phone, Name...)" class="auth-input"></textarea>
+            <button class="btn" onclick="adminImportLeads()">Parse & Import</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <div class="hd">
+            <h2>Pipeline & Leads</h2>
+            <span class="hint mono" id="viewStatus">Loading...</span>
+          </div>
+          <div class="bd">
+            <div class="kpi" id="kpiGrid"></div>
+            <div class="filters">
+              <div class="field"><label>Search</label><input id="search" placeholder="Filter..." /></div>
+              <div class="field small"><label>Stage</label><select id="filterStage"></select></div>
+              <div class="field small"><label>Route</label><select id="filterRoute">
+                <option value="All">All</option><option value="Unrouted">Unrouted</option>
+                <option value="48-Hour Fix">48-Hour Fix</option><option value="Paid Revenue Leak Diagnostic">Diagnostic</option>
+                <option value="Nurture">Nurture</option><option value="Disqualified">Disqualified</option>
+              </select></div>
+            </div>
+            <div class="tablewrap">
+              <table id="leadTable">
+                <thead>
+                  <tr>
+                    <th data-sort="company" style="min-width:160px">Lead / Company</th>
+                    <th data-sort="phone">Phone</th>
+                    <th data-sort="city">City/State</th>
+                    <th data-sort="stage" style="width:100px">Stage</th>
+                    <th data-sort="gbp1">GBP 1</th>
+                    <th data-sort="recommendation">Rec</th>
+                    <th data-sort="nextAction">Next Action</th>
+                    <th data-sort="nextDue">Next Due</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="panel">
+      <div class="hd">
+        <h3 id="modalTitle">Activity & Details</h3>
+        <button class="btn secondary" id="btnCloseModal" style="color:var(--brand)">Close</button>
+      </div>
+      <div class="status-bar">
+        <div class="status-group"><span class="status-label">Status</span><input id="m_stage" readonly /></div>
+        <div class="status-group">
+            <span class="status-label">Next Action</span>
+            <select id="m_nextAction">
+                <option value="Call Attempt">Call Attempt</option><option value="Follow-up Email">Follow-up Email</option>
+                <option value="Book 15-min">Book 15-min</option><option value="Confirm 15-min">Confirm 15-min</option>
+                <option value="Sold 48-Hour Fix">Sold 48-Hour Fix</option>
+                <option value="Sold Rev Diagnostic">Sold Rev Diagnostic</option>
+                <option value="Reschedule">Reschedule</option><option value="Nurture">Nurture</option><option value="Disqualify">Disqualify</option>
+            </select>
+        </div>
+      </div>
+      <div class="bd-grid">
+        <div class="modal-col left">
+          <h4 style="margin:0 0 16px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Contact Info</h4>
+          <div class="row modal-grid">
+            <div><label>First Name</label><input id="m_firstName" /></div>
+            <div><label>Last Name</label><input id="m_lastName" /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>Company</label><input id="m_company" /></div>
+            <div><label>Title</label><input id="m_title" /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>Phone</label><input id="m_phone" /></div>
+            <div><label>Email</label><input id="m_email" /></div>
+          </div>
+          <h4 style="margin:20px 0 12px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Diagnostic Data</h4>
+          <div class="row modal-grid">
+            <div><label>Industry</label><input id="m_industry" /></div>
+            <div><label>Recommendation</label><input id="m_recommendation" /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>GBP 1 (Relevance)</label><input id="m_gbp1" /></div>
+            <div><label>GBP 2 (Conversion)</label><input id="m_gbp2" /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>GBP 3 (Systems)</label><input id="m_gbp3" /></div>
+            <div><label>Website</label><input id="m_website" /></div>
+          </div>
+          <div class="row one modal-grid" style="margin-top:12px">
+            <div><label>Notes</label><textarea id="m_notes" style="min-height:60px"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-col right">
+          <div class="call-controls">
+            <div id="callTimer" class="timer">00:00</div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn success" id="btnCallStart">📞 Call</button>
+              <button class="btn danger" id="btnCallEnd" style="display:none;">End & Log</button>
+            </div>
+          </div>
+          <h4 style="margin:0 0 16px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Call Results</h4>
+          <div class="row one">
+            <div class="modal-grid"><label style="color:var(--ink)">1. Add Log Entry</label><textarea id="logNote" placeholder="Notes from the call..."></textarea></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px;">
+             <div><label style="color:var(--ink)">Next Due Date</label><input id="m_nextDue" type="datetime-local" /></div>
+          </div>
+          <div class="row" style="margin-top:20px;">
+            <div>
+              <label style="color:var(--ink)">2. Quick Actions (Updates Status/Next)</label>
+              <div class="rowactions quick-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px;">
+                <button class="mini" data-stage="Attempting" data-next="Call Attempt">Attempt</button>
+                <button class="mini" data-stage="Connected" data-next="Book 15-min">Connected</button>
+                <button class="mini" data-stage="Booked – 15 Min Diagnostic" data-next="Confirm 15-min">Booked 15m</button>
+                <button class="mini" data-stage="Sold - 48 Hour Fix" data-next="Sold 48-Hour Fix">Sold 48hr</button>
+                <button class="mini" data-stage="Sold - RLD" data-next="Sold Rev Diagnostic">Sold RLD</button>
+                <button class="mini" data-stage="No-Show" data-next="Reschedule">No-show</button>
+              </div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:24px; padding-top:16px; border-top:1px solid var(--line);">
+            <button class="btn" id="btnSaveLog" style="width:100%;">Save Log & Next</button>
+          </div>
+          <div class="divider" style="background:var(--line)"></div>
+          <div class="tablewrap" style="max-height:250px; overflow-y:auto; margin-top:0;">
+            <table><thead><tr><th>Time</th><th>Entry</th></tr></thead><tbody id="logTbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="panel" style="width:min(900px, 95%); height:auto; max-height:90vh; display:block;">
+        <div class="hd">
+            <h3>Edit Lead Details</h3>
+            <button class="btn secondary" id="btnCloseEdit" style="background:rgba(255,255,255,0.2); color:#fff; border:none;">Close</button>
+        </div>
+        <div class="bd" style="overflow-y:auto;">
+            <form id="editForm" autocomplete="off">
+                <div class="row">
+                  <div><label>First Name</label><input id="e_firstName" /></div>
+                  <div><label>Last Name</label><input id="e_lastName" /></div>
+                </div>
+                <div class="row" style="margin-top:16px">
+                  <div><label>Title</label><input id="e_title" /></div>
+                  <div><label>Company</label><input id="e_company" /></div>
+                </div>
+                <div class="row" style="margin-top:16px">
+                  <div><label>Phone</label><input id="e_phone" /></div>
+                  <div><label>Email</label><input id="e_email" /></div>
+                </div>
+                <div class="row" style="margin-top:16px">
+                  <div><label>City/State</label><input id="e_city" /></div>
+                  <div><label>Industry</label><input id="e_industry" /></div>
+                </div>
+                <div class="row" style="margin-top:16px">
+                  <div><label>Website</label><input id="e_website" /></div>
+                  <div><label>Recommendation</label><input id="e_recommendation" /></div>
+                </div>
+                <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+                    <label>Diagnostic Data (GBP)</label>
+                    <div class="row">
+                        <div><label>GBP 1</label><input id="e_gbp1" /></div>
+                        <div><label>GBP 2</label><input id="e_gbp2" /></div>
+                    </div>
+                    <div class="row" style="margin-top:12px">
+                        <div><label>GBP 3</label><input id="e_gbp3" /></div>
+                    </div>
+                </div>
+                <div class="actions" style="margin-top:24px">
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><div class="t" id="toastTitle">Saved</div><div class="m" id="toastMsg">Lead updated.</div></div>
+
+  <script>
+    // --- SUPABASE CONFIG ---
+    const SUPABASE_URL = 'https://nblrhbdewuedkbycnzey.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ibHJoYmRld3VlZGtieWNuemV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwODg2NDIsImV4cCI6MjA4NTY2NDY0Mn0.dJ5iIbXm1aR7LhOr3MwvYq-fCGM_4dQd0FpaKEj0Ae8'; 
+    
+    // Safely Initialize Supabase
+    let supabase = null;
+    
+    function initSupabase() {
+        if(window.supabase && window.supabase.createClient) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            return true;
+        } else {
+            console.error("Supabase client not found on window object.");
+            return false;
+        }
+    }
+
+    // --- STATE & UTILS ---
+    let currentUser = null;
+    let isAdmin = false;
+    let leads = [];
+    let activeLeadId = null;
+    let userList = [];
+    const STAGES = [
+        "New Lead", "Attempting", "Connected", 
+        "Booked – 15 Min Diagnostic", "Held – 15 Min Diagnostic", 
+        "No-Show", "Reschedule", "Qualified – Next Step Scheduled", 
+        "Sold - 48 Hour Fix", "Sold - RLD", "Disqualified", "Nurture"
+    ];
+    const $ = (id) => document.getElementById(id);
+    const safe = (v) => (v ?? "").toString().trim();
+    const showToast = (t, m) => { 
+        $("toastTitle").innerText=t; $("toastMsg").innerText=m; 
+        $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2500); 
+    };
+
+    // --- INITIALIZATION ---
+    window.addEventListener('load', async () => {
+        if(!initSupabase()) {
+            alert("Error loading application core. Please refresh or check connection.");
+            return;
+        }
+
+        // Attach global handleLogin to window for the button onclick
+        window.handleLogin = handleLogin;
+        window.handleLogout = handleLogout;
+        window.adminCreateUser = adminCreateUser;
+        window.adminImportLeads = adminImportLeads;
+        window.toggleAdminPanel = toggleAdminPanel;
+        window.openLead = openLead; // Exposed for table clicks
+
+        // Check Session
+        const { data: { session } } = await supabase.auth.getSession();
+        if(session) {
+            await initApp(session.user);
+        }
+        
+        // Populate Stage Filters
+        const filterSel = $("filterStage");
+        filterSel.innerHTML = `<option value="All">All</option>` + STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
+    });
+
+    // --- AUTHENTICATION ---
+    async function handleLogin(){
+        const email = $("loginEmail").value;
+        const password = $("loginPass").value;
+        const btn = $("btnLogin");
+        
+        $("loginMsg").innerText = "";
+        btn.innerText = "Loading...";
+        
+        if(!email || !password) {
+            $("loginMsg").innerText = "Please enter email and password.";
+            btn.innerText = "Sign In";
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
+        if(error) { 
+            console.error(error);
+            $("loginMsg").innerText = error.message; 
+            btn.innerText = "Sign In";
+            return; 
+        }
+        await initApp(data.user);
+        btn.innerText = "Sign In";
+    }
+
+    async function handleLogout(){
+        await supabase.auth.signOut();
+        window.location.reload();
+    }
+
+    async function initApp(user) {
+        currentUser = user;
+        $("authView").classList.add("hide");
+        $("appView").classList.remove("hide");
+        $("userDisplay").innerText = user.email;
+
+        // Check Role
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if(profile && profile.role === 'admin') {
+            isAdmin = true;
+            $("adminBar").classList.remove("hide");
+            fetchUserList(); 
+        }
+
+        fetchLeads();
+    }
+
+    // --- DATA FETCHING ---
+    async function fetchLeads() {
+        const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
+        if(error) { console.error("Fetch Error:", error); return; }
+        leads = data;
+        renderLeads();
+    }
+
+    async function fetchUserList() {
+        // Only works for Admins
+        const { data } = await supabase.from('profiles').select('id, email, first_name, last_name');
+        if(data) {
+            userList = data;
+            const sel = $("assignToSelect");
+            sel.innerHTML = data.map(u => `<option value="${u.id}">${u.first_name || u.email}</option>`).join("");
+        }
+    }
+
+    // --- ADMIN ACTIONS ---
+    function toggleAdminPanel() { $("adminPanel").classList.toggle("hide"); }
+
+    async function adminCreateUser() {
+        const email = $("newUserEmail").value;
+        const password = $("newUserPass").value;
+        
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if(error) alert("Error: " + error.message);
+        else {
+            alert("User created! They can now log in.");
+            $("newUserEmail").value = ""; $("newUserPass").value = "";
+        }
+    }
+
+    async function adminImportLeads() {
+        const txt = $("csvInput").value;
+        const assignee = $("assignToSelect").value;
+        if(!txt || !assignee) return alert("Paste CSV and select a user.");
+
+        const lines = txt.split(/\r?\n/);
+        const toInsert = [];
+        
+        // Simple CSV Parser (Headerless assumption based on prototype)
+        // Expected: Company, Phone, Name
+        lines.forEach(line => {
+            const cols = line.split(',');
+            if(cols.length > 1) {
+                toInsert.push({
+                    company: cols[0]?.trim(),
+                    phone: cols[1]?.trim(),
+                    first_name: cols[2]?.trim(),
+                    assigned_to: assignee,
+                    stage: 'New Lead'
+                });
+            }
+        });
+
+        const { error } = await supabase.from('leads').insert(toInsert);
+        if(error) alert("Import Error: " + error.message);
+        else {
+            alert(`Imported ${toInsert.length} leads.`);
+            fetchLeads();
+            $("csvInput").value = "";
+        }
+    }
+
+    // --- CRM UI LOGIC ---
+    function renderLeads() {
+        const q = safe($("search").value).toLowerCase();
+        const stage = $("filterStage").value;
+        let visible = leads;
+
+        if (stage !== "All") visible = visible.filter(l => l.stage === stage);
+        if (q) visible = visible.filter(l => JSON.stringify(l).toLowerCase().includes(q));
+
+        $("viewStatus").innerText = `Count: ${visible.length}`;
+        
+        const total = visible.length;
+        const booked = visible.filter(l => l.stage && l.stage.includes("Booked")).length;
+        const kpis = [ {l:"Total", v:total}, {l:"Booked", v:booked} ];
+        $("kpiGrid").innerHTML = kpis.map(k=>`<div class="box"><div class="label">${k.l}</div><div class="value">${k.v}</div></div>`).join("");
+
+        const rows = visible.map(l => `
+            <tr>
+                <td class="lead-col">${safe(l.company || l.last_name)}<br><span class="lead-meta">${safe(l.first_name)}</span></td>
+                <td><a href="tel:${safe(l.phone)}">${safe(l.phone)}</a></td>
+                <td>${safe(l.city)}</td>
+                <td><span class="pill stage">${safe(l.stage)}</span></td>
+                <td>${safe(l.gbp1)}</td>
+                <td>${safe(l.recommendation)}</td>
+                <td>${safe(l.next_action)}</td>
+                <td style="font-size:11px">${l.next_due ? new Date(l.next_due).toLocaleString() : ''}</td>
+                <td style="text-align:right">
+                    <button class="mini primary" onclick="openLead('${l.id}')">Call/Edit</button>
+                </td>
+            </tr>
+        `).join("");
+        
+        $("tbody").innerHTML = rows || `<tr><td colspan="9" style="text-align:center; padding:20px;">No leads found.</td></tr>`;
+    }
+
+    // --- LEAD MODAL ---
+    async function openLead(id) {
+        activeLeadId = id;
+        const lead = leads.find(l => l.id === id);
+        if(!lead) return;
+
+        $("modalTitle").innerText = lead.company || "Lead Details";
+        $("m_firstName").value = lead.first_name || "";
+        $("m_lastName").value = lead.last_name || "";
+        $("m_company").value = lead.company || "";
+        $("m_title").value = lead.title || "";
+        $("m_phone").value = lead.phone || "";
+        $("m_email").value = lead.email || "";
+        $("m_industry").value = lead.industry || "";
+        $("m_website").value = lead.website || "";
+        $("m_gbp1").value = lead.gbp1 || "";
+        $("m_gbp2").value = lead.gbp2 || "";
+        $("m_gbp3").value = lead.gbp3 || "";
+        $("m_recommendation").value = lead.recommendation || "";
+        $("m_stage").value = lead.stage || "";
+        $("m_nextAction").value = lead.next_action || "";
+        $("m_notes").value = lead.notes || "";
+        
+        if(lead.next_due) {
+            const d = new Date(lead.next_due);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            $("m_nextDue").value = d.toISOString().slice(0,16);
+        } else {
+            $("m_nextDue").value = "";
+        }
+
+        renderLogs(lead.activity);
+        
+        // Populate edit form
+        $("e_firstName").value = lead.first_name || "";
+        $("e_lastName").value = lead.last_name || "";
+        $("e_company").value = lead.company || "";
+        $("e_title").value = lead.title || "";
+        $("e_phone").value = lead.phone || "";
+        $("e_email").value = lead.email || "";
+        $("e_city").value = lead.city || "";
+        $("e_industry").value = lead.industry || "";
+        $("e_website").value = lead.website || "";
+        $("e_recommendation").value = lead.recommendation || "";
+        $("e_gbp1").value = lead.gbp1 || "";
+        $("e_gbp2").value = lead.gbp2 || "";
+        $("e_gbp3").value = lead.gbp3 || "";
+
+        $("modal").classList.add("open");
+    }
+
+    function renderLogs(activityArray) {
+        if(!activityArray) { $("logTbody").innerHTML = ""; return; }
+        const logs = Array.isArray(activityArray) ? activityArray : [];
+        $("logTbody").innerHTML = logs.map(l => `<tr><td style="width:120px; font-size:11px;">${new Date(l.ts).toLocaleString()}</td><td><strong>${l.action}</strong>: ${l.text}</td></tr>`).join("");
+    }
+
+    // --- SAVE / UPDATE ---
+    $("btnSaveLog").onclick = async () => {
+        if(!activeLeadId) return;
+
+        const note = $("logNote").value;
+        const nextAct = $("m_nextAction").value;
+        const nextDue = $("m_nextDue").value;
+        const stage = $("m_stage").value;
+        
+        const updateData = {
+            stage: stage, 
+            next_action: nextAct,
+            next_due: nextDue ? new Date(nextDue).toISOString() : null,
+            notes: $("m_notes").value,
+            updated_at: new Date().toISOString()
+        };
+
+        let currentLead = leads.find(l => l.id === activeLeadId);
+        let activity = currentLead.activity || [];
+        if(note) {
+            activity.unshift({
+                ts: new Date().toISOString(),
+                action: "Log",
+                text: note + ` [Next: ${nextAct}]`
+            });
+            updateData.activity = activity;
+        }
+
+        const { error } = await supabase.from('leads').update(updateData).eq('id', activeLeadId);
+        
+        if(error) alert("Error saving: " + error.message);
+        else {
+            showToast("Success", "Lead updated.");
+            $("modal").classList.remove("open");
+            $("logNote").value = "";
+            fetchLeads(); 
+        }
+    };
+    
+    // Edit Form Save
+    $("editForm").onsubmit = async (e) => {
+        e.preventDefault();
+        if(!activeLeadId) return;
+        
+        const updateData = {
+            first_name: $("e_firstName").value,
+            last_name: $("e_lastName").value,
+            title: $("e_title").value,
+            company: $("e_company").value,
+            phone: $("e_phone").value,
+            email: $("e_email").value,
+            city: $("e_city").value,
+            industry: $("e_industry").value,
+            website: $("e_website").value,
+            recommendation: $("e_recommendation").value,
+            gbp1: $("e_gbp1").value,
+            gbp2: $("e_gbp2").value,
+            gbp3: $("e_gbp3").value,
+            updated_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabase.from('leads').update(updateData).eq('id', activeLeadId);
+        if(error) alert("Error: " + error.message);
+        else {
+            showToast("Success", "Details updated.");
+            $("editModal").classList.remove("open");
+            fetchLeads();
+        }
+    };
+
+    // Quick Actions
+    document.querySelectorAll(".quick-actions button").forEach(btn => {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            $("m_stage").value = btn.dataset.stage;
+            $("m_nextAction").value = btn.dataset.next;
+        };
+    });
+
+    // Create New Lead Button
+    $("btnCreateNew").onclick = async () => {
+        if(!currentUser) return;
+        const co = prompt("Enter Company Name:");
+        if(co) {
+            const { error } = await supabase.from('leads').insert({
+                company: co,
+                stage: "New Lead",
+                assigned_to: currentUser.id
+            });
+            if(error) alert(error.message);
+            else {
+                showToast("Created", "Lead added.");
+                fetchLeads();
+            }
+        }
+    };
+
+    // Modal Controls
+    $("btnCloseModal").onclick = () => { $("modal").classList.remove("open"); };
+    $("btnCloseEdit").onclick = () => { $("editModal").classList.remove("open"); };
+    
+    // Call Timer Logic
+    let timerInterval;
+    let seconds = 0;
+    $("btnCallStart").onclick = () => {
+        const phone = $("m_phone").value;
+        if(phone) window.location.href = `tel:${phone}`;
+        
+        clearInterval(timerInterval);
+        seconds = 0;
+        $("callTimer").classList.add("active");
+        $("btnCallStart").style.display = "none";
+        $("btnCallEnd").style.display = "inline-flex";
+        timerInterval = setInterval(() => {
+            seconds++;
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            $("callTimer").textContent = `${m}:${s}`;
+        }, 1000);
+    };
+    
+    $("btnCallEnd").onclick = () => {
+        clearInterval(timerInterval);
+        $("callTimer").classList.remove("active");
+        $("btnCallStart").style.display = "inline-flex";
+        $("btnCallEnd").style.display = "none";
+        
+        const dur = $("callTimer").textContent;
+        $("logNote").value = `[Call Duration: ${dur}] ` + $("logNote").value;
+        $("editModal").classList.add("open");
+    };
+
+    $("search").addEventListener("input", renderLeads);
+    $("filterStage").addEventListener("change", renderLeads);
+
+  </script>
+</body>
+</html>
