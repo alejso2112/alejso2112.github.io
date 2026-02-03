@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IMPACTA | Sales Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{ --brand:#0c62ab; --brand-dark:#094a80; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f1f5f9; --radius:12px; --mono: ui-monospace, monospace; --sans: system-ui, -apple-system, sans-serif; }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:var(--sans); background:var(--bg); color:var(--ink); }
+    .topbar{ background:var(--brand-dark); color:white; padding:14px 22px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+    .layout{ display:grid; grid-template-columns: 360px 1fr; height:calc(100vh - 52px); }
+    .panel{ background:white; border-right:1px solid var(--line); overflow:auto; }
+    .main{ padding:24px; overflow:auto; }
+    .lead{ padding:14px; border-bottom:1px solid var(--line); cursor:pointer; }
+    .lead:hover{ background:#f8fafc; }
+    .lead.active{ background:#e0f2fe; }
+    .badge{ font-size:11px; padding:4px 8px; border-radius:999px; background:#e2e8f0; }
+    .btn{ padding:8px 16px; border-radius:8px; background:var(--brand); color:#fff; font-weight:600; cursor:pointer; border:none; }
+    .btn.secondary{ background:#e2e8f0; color:#0f172a; }
+    .field{ margin-bottom:12px; }
+    label{ font-size:12px; color:var(--muted); font-weight:600; display:block; margin-bottom:4px; }
+    input, select, textarea{ width:100%; padding:8px; border-radius:6px; border:1px solid var(--line); font-family:var(--sans); }
+    textarea{ min-height:70px; }
+    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; }
+    .modal.open{ display:flex; }
+    .modal-box{ background:white; padding:24px; width:420px; border-radius:12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>Rep Workspace</div>
+    <button class="btn secondary" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <div style="padding:14px;">
+        <button class="btn" id="btnCreateNew">+ New Lead</button>
+      </div>
+      <div id="leadList"></div>
+    </div>
+
+    <div class="main">
+      <h2 id="leadTitle">Select a Lead</h2>
+      <div id="leadDetails"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;">Log Activity</h3>
+      <div class="field">
+        <label>Stage</label>
+        <select id="m_stage">
+          <option>New Lead</option>
+          <option>Contacted</option>
+          <option>Quoted</option>
+          <option>Negotiation</option>
+          <option>Sold</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Next Action</label>
+        <input id="m_nextAction">
+      </div>
+      <div class="field">
+        <label>Next Follow-Up Date</label>
+        <input type="date" id="m_nextDue">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="logNote"></textarea>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="btnSaveLog">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const SUPABASE_URL = 'https://imszwgxngjuanjvxigel.supabase.co';
+const SUPABASE_KEY = 'YOUR_KEY';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let leads = [];
+let activeLeadId = null;
+const currentUser = JSON.parse(localStorage.getItem("impacta_user"));
+if(!currentUser) location.href = "lite9876932.html";
+
+function logout(){ localStorage.removeItem("impacta_user"); location.href="lite9876932.html"; }
+
+async function fetchLeads(){
+  const { data } = await supabase.from('leads').select('*').eq('assigned_to', currentUser.id).order('created_at', { ascending:false });
+  leads = data || [];
+  document.getElementById("leadList").innerHTML = leads.map(l=>`
+    <div class="lead ${l.id===activeLeadId?'active':''}" onclick="openLead('${l.id}')">
+      <b>${l.company||'Unknown'}</b><br>
+      <span class="badge">${l.stage||'New'}</span>
+    </div>`).join('');
+}
+
+function openLead(id){
+  activeLeadId = id;
+  const l = leads.find(x=>x.id===id);
+  document.getElementById("leadTitle").innerText = l.company;
+  document.getElementById("leadDetails").innerHTML = `
+    <p><b>Stage:</b> ${l.stage||''}</p>
+    <p><b>Next Action:</b> ${l.next_action||''}</p>
+    <button class="btn" onclick="openModal()">Log Activity</button>
+  `;
+  fetchLeads();
+}
+
+function openModal(){ document.getElementById("modal").classList.add("open"); }
+function closeModal(){ document.getElementById("modal").classList.remove("open"); }
+
+document.getElementById("btnSaveLog").onclick = async ()=>{
+  if(!activeLeadId) return;
+  const note = document.getElementById("logNote").value;
+  const nextAct = document.getElementById("m_nextAction").value;
+
+  const newLog = { ts:new Date().toISOString(), action:"Log", text:note, by:currentUser.name };
+  const l = leads.find(x=>x.id===activeLeadId);
+  const updatedActivity = [newLog, ...(l.activity||[])];
+
+  await supabase.from('leads').update({
+    activity: updatedActivity,
+    stage: document.getElementById("m_stage").value,
+    next_action: nextAct,
+    next_due: document.getElementById("m_nextDue").value ? new Date(document.getElementById("m_nextDue").value).toISOString() : null,
+    updated_at: new Date().toISOString()
+  }).eq('id', activeLeadId);
+
+  closeModal();
+  fetchLeads();
+};
+
+fetchLeads();
+</script>
+</body>
+</html>
