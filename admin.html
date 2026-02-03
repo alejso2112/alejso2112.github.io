@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMPACTA Admin</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        /* Reusing CRM CSS for consistency */
+        :root{ --brand:#0c62ab; --brand-dark:#094a80; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f1f5f9; --radius:12px; --sans: system-ui, -apple-system, sans-serif; }
+        *{box-sizing:border-box}
+        body{ margin:0; font-family:var(--sans); background: var(--bg); color:var(--ink); font-size: 14px; }
+        .wrap{ max-width:1400px; margin:0 auto; padding: 24px; }
+        .topbar{ background: #fff; border-bottom:1px solid var(--line); padding: 16px 24px; display:flex; justify-content: space-between; align-items: center; }
+        .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; background:var(--brand); color:#fff; font-weight:600; cursor:pointer; border:none; text-decoration: none;}
+        .btn:hover{background:var(--brand-dark)}
+        .btn.secondary{background:#fff; color:var(--ink); border:1px solid var(--line);}
+        .card { background: #fff; border-radius: var(--radius); border: 1px solid var(--line); padding: 24px; margin-bottom: 24px; }
+        h2 { margin-top: 0; color: var(--brand); }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; }
+        th { background: #f8fafc; color: var(--muted); font-size: 12px; text-transform: uppercase; }
+        select, input { padding: 8px; border: 1px solid var(--line); border-radius: 6px; width: 100%; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        .assign-bar { display: flex; gap: 10px; align-items: center; background: #eef2ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #c7d2fe; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div style="display:flex; gap:12px; align-items:center;">
+        <img src="img/logo-main-2026.png" style="height:32px;">
+        <h1 style="margin:0; font-size:18px;">Admin Dashboard</h1>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <a href="crm.html" class="btn secondary">View CRM</a>
+        <button id="btnLogout" class="btn secondary">Logout</button>
+    </div>
+</div>
+
+<main class="wrap">
+    
+    <div class="grid-2">
+        <div class="card">
+            <h2>Create New User</h2>
+            <p style="color:var(--muted); margin-bottom:16px;">This creates an account and sets role to 'Agent'.</p>
+            <form id="createUserForm">
+                <label>Email</label>
+                <input type="email" id="newEmail" required style="margin-bottom:12px;">
+                <label>Password</label>
+                <input type="password" id="newPass" required style="margin-bottom:12px;">
+                <button type="submit" class="btn" style="width:100%">Create User</button>
+            </form>
+            <p id="userMsg" style="margin-top:10px; font-weight:bold;"></p>
+            
+            <h3 style="margin-top:24px; font-size:16px;">Agent List</h3>
+            <ul id="agentList" style="padding-left:20px; color:var(--muted);">Loading...</ul>
+        </div>
+
+        <div class="card">
+            <h2>Lead Assignment</h2>
+            
+            <div class="assign-bar">
+                <strong>Assign Selected To:</strong>
+                <select id="assignSelect" style="max-width:200px;"><option>Loading agents...</option></select>
+                <button id="btnAssign" class="btn">Apply</button>
+            </div>
+
+            <div style="max-height: 500px; overflow-y:auto;">
+                <table id="leadTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
+                            <th>Company / Lead</th>
+                            <th>Assigned To</th>
+                            <th>Stage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadBody">
+                        <tr><td colspan="4">Loading leads...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const SUPABASE_URL = 'https://uafnhxcsrrdispsbpuxj.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhZm5oeGNzcnJkaXNwc2JwdXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwOTMwNDYsImV4cCI6MjA4NTY2OTA0Nn0.B5sAP0rE7PVImVWDWlJ2d08y1qZv-rbAlU6WZtbkZRs';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let agents = [];
+
+    async function init() {
+        // Auth Check
+        const { data: { session } } = await supabase.auth.getSession();
+        if(!session) window.location.href = 'index.html';
+
+        // Check Admin
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if(profile.role !== 'admin') { alert("Access Denied"); window.location.href = 'crm.html'; return; }
+
+        loadAgents();
+        loadLeads();
+    }
+
+    async function loadAgents() {
+        const { data, error } = await supabase.from('profiles').select('*').eq('role', 'agent');
+        agents = data || [];
+        
+        // Populate List
+        const ul = document.getElementById('agentList');
+        ul.innerHTML = agents.map(a => `<li>${a.email}</li>`).join('');
+
+        // Populate Dropdown
+        const sel = document.getElementById('assignSelect');
+        sel.innerHTML = `<option value="">-- Select Agent --</option>` + 
+                        agents.map(a => `<option value="${a.id}">${a.email}</option>`).join('');
+    }
+
+    async function loadLeads() {
+        // Fetch leads + joined profile email
+        const { data, error } = await supabase
+            .from('leads')
+            .select('id, company, first_name, last_name, stage, assigned_to')
+            .order('created_at', { ascending: false });
+
+        const tbody = document.getElementById('leadBody');
+        if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4">No leads found.</td></tr>'; return; }
+
+        tbody.innerHTML = data.map(l => {
+            const agentName = agents.find(a => a.id === l.assigned_to)?.email || '<span style="color:red">Unassigned</span>';
+            const name = l.company || `${l.first_name} ${l.last_name}`;
+            return `
+                <tr>
+                    <td><input type="checkbox" class="lead-check" value="${l.id}"></td>
+                    <td><strong>${name}</strong></td>
+                    <td>${agentName}</td>
+                    <td>${l.stage}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Assign Logic
+    document.getElementById('btnAssign').onclick = async () => {
+        const agentId = document.getElementById('assignSelect').value;
+        if(!agentId) return alert("Select an agent.");
+        
+        const selected = Array.from(document.querySelectorAll('.lead-check:checked')).map(cb => cb.value);
+        if(selected.length === 0) return alert("Select leads.");
+
+        const { error } = await supabase.from('leads').update({ assigned_to: agentId }).in('id', selected);
+        
+        if(error) alert(error.message);
+        else {
+            alert(`Assigned ${selected.length} leads.`);
+            loadLeads();
+        }
+    };
+
+    // Toggle All
+    document.getElementById('selectAll').onclick = (e) => {
+        document.querySelectorAll('.lead-check').forEach(cb => cb.checked = e.target.checked);
+    };
+
+    // Logout
+    document.getElementById('btnLogout').onclick = async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+    };
+
+    // Create User (Note: This is a hacky way client-side, normally requires Service Role)
+    document.getElementById('createUserForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('newEmail').value;
+        const password = document.getElementById('newPass').value;
+        
+        // WARNING: Client-side creation logs the NEW user in immediately.
+        // We handle this by alerting the admin to re-login or use incognito.
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        
+        if(error) {
+            document.getElementById('userMsg').style.color = "red";
+            document.getElementById('userMsg').innerText = error.message;
+        } else {
+            alert("User created! Important: You have been signed in as the new user. Please log out and log back in as Admin.");
+            window.location.reload();
+        }
+    };
+
+    init();
+</script>
+</body>
+</html>
