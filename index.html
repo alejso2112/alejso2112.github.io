@@ -50,9 +50,11 @@
     <div class="auth-box">
       <img src="img/logo-main-2025.png" alt="IMPACTA" onerror="this.style.display='none'">
       <h2 style="margin-top:0; color:var(--brand);">CRM Login</h2>
-      <input type="email" id="email" placeholder="Enter your email" />
-      <input type="password" id="password" placeholder="Enter your password" />
-      <button class="btn" id="btnLogin" onclick="login()">Sign In</button>
+      <form onsubmit="login(event)">
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <input type="password" id="password" placeholder="Enter your password" required />
+        <button class="btn" id="btnLogin" type="submit">Sign In</button>
+      </form>
       <div id="errorMsg" style="color:red; margin-top:10px; font-size:13px;"></div>
     </div>
   </div>
@@ -118,17 +120,18 @@
     const SUPABASE_URL = 'https://nblrhbdewuedkbycnzey.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ibHJoYmRld3VlZGtieWNuemV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwODg2NDIsImV4cCI6MjA4NTY2NDY0Mn0.dJ5iIbXm1aR7LhOr3MwvYq-fCGM_4dQd0FpaKEj0Ae8';
     
-    let supabase = null;
+    // Renamed variable to avoid conflict with the library 'supabase'
+    let supabaseClient = null;
     let currentUser = null;
 
     // --- 2. INITIALIZATION ---
     window.onload = function() {
       try {
         if (!window.supabase) throw new Error("Supabase library failed to load.");
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Initialize the client using the new variable name
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         console.log("System Online");
         
-        // Check if already logged in
         checkSession();
       } catch (err) {
         alert("CRITICAL ERROR: " + err.message);
@@ -136,14 +139,16 @@
     };
 
     async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         loadApp(session.user);
       }
     }
 
     // --- 3. LOGIN LOGIC ---
-    async function login() {
+    async function login(e) {
+      if (e) e.preventDefault(); // Prevents page refresh on form submit
+
       const btn = document.getElementById('btnLogin');
       const errBox = document.getElementById('errorMsg');
       const email = document.getElementById('email').value;
@@ -157,7 +162,7 @@
       try {
         if (!email || !pass) throw new Error("Please enter both email and password.");
 
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
           email: email,
           password: pass
         });
@@ -170,14 +175,13 @@
       } catch (err) {
         console.error(err);
         errBox.innerText = err.message;
-        btn.innerText = "Sign In"; // Reset button
+        btn.innerText = "Sign In"; 
         btn.disabled = false;
-        alert("Login Failed: " + err.message);
       }
     }
 
     async function logout() {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       window.location.reload();
     }
 
@@ -188,11 +192,16 @@
       document.getElementById('appView').classList.remove('hide');
       document.getElementById('userEmail').innerText = user.email;
 
-      // Check Admin Role
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      // Check Admin Role - using maybeSingle() to prevent crashes if no profile exists
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
       if (profile && profile.role === 'admin') {
         document.getElementById('adminBar').classList.remove('hide');
-        loadUsersForAdmin(); // Load user dropdown
+        loadUsersForAdmin(); 
       }
 
       fetchLeads();
@@ -201,7 +210,7 @@
     async function fetchLeads() {
       document.getElementById('leadBody').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Loading leads...</td></tr>';
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false });
@@ -239,7 +248,7 @@
     }
 
     async function loadUsersForAdmin() {
-      const { data } = await supabase.from('profiles').select('id, email');
+      const { data } = await supabaseClient.from('profiles').select('id, email');
       if (data) {
         const sel = document.getElementById('userSelect');
         sel.innerHTML = data.map(u => `<option value="${u.id}">${u.email}</option>`).join('');
@@ -252,7 +261,6 @@
       
       if (!assignee || !csv) return alert("Please select a user and paste CSV data.");
 
-      // Quick Parse (Split by line, then comma)
       const rows = csv.split('\n').filter(r => r.trim() !== '');
       const toInsert = rows.map(row => {
         const cols = row.split(',');
@@ -266,13 +274,13 @@
         };
       });
 
-      const { error } = await supabase.from('leads').insert(toInsert);
+      const { error } = await supabaseClient.from('leads').insert(toInsert);
       
       if (error) alert("Import Failed: " + error.message);
       else {
         alert(`Successfully imported ${toInsert.length} leads.`);
-        document.getElementById('csvData').value = ""; // Clear
-        fetchLeads(); // Refresh UI
+        document.getElementById('csvData').value = ""; 
+        fetchLeads(); 
       }
     }
   </script>
