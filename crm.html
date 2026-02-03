@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IMPACTA Quick CRM</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    /* ... (CSS COPIED FROM ORIGINAL PROMPT - PRESERVED EXACTLY) ... */
+    :root{ --brand:#0c62ab; --brand-dark:#094a80; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f1f5f9; --radius:12px; --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    *{box-sizing:border-box} body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;font-size:14px}
+    a{color:var(--brand);text-decoration:none} .wrap{max-width:1800px;margin:0 auto;padding:0 24px}
+    .topbar{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(255,255,255,.98);backdrop-filter:blur(10px)}
+    .topbar .inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
+    .brand{display:flex;align-items:center;gap:12px;min-width:260px} .logo{height:40px;width:auto;flex:0 0 auto;display:block}
+    .brand h1{margin:0;font-size:16px;font-weight:700;color:var(--brand-dark);letter-spacing:-0.01em} .brand p{margin:0;font-size:13px;color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(12,98,171,.1);background:var(--brand);color:#fff;font-weight:600;font-size:14px;cursor:pointer;transition:all .15s ease;white-space:nowrap}
+    .btn:hover{background:var(--brand-dark)} .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} .btn.secondary:hover{background:#f8fafc;border-color:#cbd5e1}
+    .btn.danger{background:#fff;color:#b91c1c;border:1px solid rgba(185,28,28,.2)} .btn.danger:hover{background:#fef2f2;border-color:#b91c1c}
+    .btn.success{background:#10b981;color:#fff;border-color:#059669} .btn.success:hover{background:#059669} .btn[disabled]{opacity:.5;cursor:not-allowed}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end} main{padding:24px 0 48px} .grid{display:block}
+    .card{background:var(--brand);color:#fff;border:1px solid var(--brand-dark);border-radius:var(--radius);box-shadow:0 12px 30px -5px rgba(12,98,171,0.25);overflow:hidden;display:flex;flex-direction:column}
+    .card .hd{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.15)}
+    .card .hd h2{margin:0;font-size:15px;font-weight:700;color:#fff} .card .bd{padding:20px;flex:1}
+    .hint{color:rgba(255,255,255,0.85);font-size:13px;margin:0} .divider{height:1px;background:rgba(255,255,255,0.2);margin:20px 0}
+    label{display:block;font-size:13px;font-weight:600;color:#fff;margin:0 0 6px;letter-spacing:0.01em}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px} .row.one{grid-template-columns:1fr}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.4);background:#fff;color:var(--ink);outline:none;font-family:var(--sans);font-size:14px;transition:border-color .15s,box-shadow .15s}
+    input::placeholder,textarea::placeholder{color:#94a3b8} input:focus,select:focus,textarea:focus{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,0.25)} textarea{min-height:90px;resize:vertical}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px} .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px} @media(max-width:1200px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    .kpi .box{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff;color:var(--ink)} .kpi .box .label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+    .kpi .box .value{font-size:22px;font-weight:800;color:var(--ink);margin-top:4px} .filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:24px;padding:16px;background:#fff;border-radius:10px;border:1px solid var(--line)}
+    .filters label{color:var(--muted);margin-bottom:4px;font-size:12px} .filters .field{min-width:160px;flex:1} .filters .field.small{min-width:120px;flex:0} .filters input,.filters select{border-color:var(--line)}
+    .tablewrap{border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:20px;color:var(--ink);width:100%;overflow-x:auto} table{width:100%;border-collapse:collapse;table-layout:auto}
+    th,td{padding:14px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top;white-space:normal;word-wrap:break-word}
+    th{position:sticky;top:0;background:#f8fafc;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;z-index:10;white-space:nowrap;cursor:pointer;user-select:none;transition:background 0.15s}
+    th:hover{background:#e2e8f0;color:var(--brand-dark)} tbody tr:nth-child(even) td{background-color:#f8fafc} tbody tr:hover td{background-color:#f1f5f9}
+    td.lead-col{min-width:160px;max-width:240px;font-weight:600;color:var(--brand-dark);line-height:1.4} .lead-meta{font-weight:400;color:var(--muted);font-size:12px;display:block;margin-top:2px}
+    td.min-col{width:1%;white-space:nowrap} td.med-col{max-width:130px} td.gbp-col{min-width:140px;max-width:200px;font-size:12px;color:#334155}
+    th:last-child{cursor:default} th:last-child:hover{background:#f8fafc} th:last-child,td:last-child{position:sticky;right:0;background:inherit;border-left:1px solid var(--line);box-shadow:-4px 0 8px rgba(0,0,0,0.02);z-index:5;width:1%;white-space:nowrap}
+    .pill{display:inline-block;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;text-align:center;line-height:1.2}
+    .pill.stage{background:#e0f2fe;color:#0369a1} .pill.disq{background:#fee2e2;color:#b91c1c} .pill.nurture{background:#fef3c7;color:#b45309} .pill.sold{background:#dcfce7;color:#15803d}
+    .rowactions{display:flex;gap:6px;align-items:center;justify-content:flex-end} .mini{padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+    .mini:hover{border-color:var(--brand);color:var(--brand)} .mini.danger:hover{border-color:#b91c1c;color:#b91c1c} .mini.primary{background:var(--brand);color:#fff;border-color:var(--brand)} .mini.primary:hover{background:var(--brand-dark)}
+    .mono{font-family:var(--mono)} .modal{position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+    .modal.open{display:flex} .modal .panel{width:min(1200px,95%);height:90vh;background:#f8fafc;border-radius:16px;border:1px solid var(--line);box-shadow:0 30px 60px -12px rgba(0,0,0,0.25);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+    .modal .panel .hd{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#ffffff;flex:0 0 auto}
+    .modal .panel .hd h3{margin:0;font-size:16px;font-weight:700;color:var(--brand);display:flex;align-items:center;gap:10px}
+    #editModal .panel .hd{background:var(--brand);border-bottom:1px solid var(--brand-dark)} #editModal .panel .hd h3{color:#fff} #editModal .bd{padding:24px} #editModal label{color:var(--ink)}
+    .status-bar{padding:12px 24px;background:#eef2ff;border-bottom:1px solid var(--line);display:flex;gap:32px;align-items:center;flex:0 0 auto} @media(max-width:800px){.status-bar{flex-direction:column;align-items:stretch;gap:12px}}
+    .status-group{display:flex;flex-direction:column;gap:4px;flex:1} .status-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)}
+    #m_stage{background:transparent;border:none;font-size:18px;font-weight:800;color:var(--brand);padding:0;margin:0;box-shadow:none;width:100%;cursor:default;text-transform:uppercase}
+    #m_nextAction{background:#fff;border:2px solid #10b981;color:#064e3b;font-weight:600;text-transform:uppercase}
+    .modal .panel .bd-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1 1 auto;overflow:hidden} .modal-col{padding:24px;overflow-y:auto} .modal-col.left{border-right:1px solid var(--line)}
+    @media(max-width:900px){.modal .panel .bd-grid{grid-template-columns:1fr;overflow-y:auto} .modal-col{overflow-y:visible} .modal-col.left{border-right:none;border-bottom:1px solid var(--line)}}
+    .modal-grid label{color:var(--muted)} .modal-grid input,.modal-grid select,.modal-grid textarea{border:1px solid var(--line);background:#ffffff;color:var(--ink)}
+    .modal-grid input:focus,.modal-grid select:focus,.modal-grid textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(12,98,171,0.1)} .note{font-size:13px;color:var(--muted);margin:12px 0 0;line-height:1.5}
+    .modal .tablewrap{background:#ffffff;color:var(--ink);border:1px solid var(--line)} .modal .tablewrap th{background:#f1f5f9;color:var(--muted)} .modal .tablewrap td{background:#ffffff}
+    .call-controls{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,0.03)}
+    .timer{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--brand)} .timer.active{color:#b91c1c;animation:pulse 1.5s infinite} @keyframes pulse{0%{opacity:1}50%{opacity:0.6}100%{opacity:1}}
+    .quick-actions button.selected{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .toast{position:fixed;right:24px;bottom:24px;background:#1e293b;color:#fff;border-radius:8px;padding:12px 16px;display:none;max-width:300px;z-index:200;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)}
+    .toast.show{display:block;animation:slideIn 0.3s ease-out} @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .toast .t{font-weight:700;font-size:13px;margin-bottom:2px} .toast .m{font-size:12px;opacity:0.9}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div class="inner">
+        <div class="brand">
+          <img src="img/logo-main-2026.png" class="logo" alt="IMPACTA" />
+          <div>
+            <h1>IMPACTA Business Solutions</h1>
+            <p>Cloud CRM • Connected</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btnCreateNew">Create New Lead</button>
+          <button class="btn secondary" id="btnLogout">Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="hd">
+          <h2>Pipeline & Leads</h2>
+          <span class="hint mono" id="viewStatus">View: 0</span>
+        </div>
+        <div class="bd">
+          <div class="kpi" id="kpiGrid"></div>
+          <div class="filters">
+            <div class="field"><label>Search</label><input id="search" placeholder="Filter..." /></div>
+            <div class="field small"><label>Stage</label><select id="filterStage"></select></div>
+          </div>
+          <div class="tablewrap">
+            <table id="leadTable">
+              <thead>
+                <tr>
+                  <th data-sort="company" style="min-width:160px">Lead / Company</th>
+                  <th data-sort="phone">Phone</th>
+                  <th data-sort="city">City/State</th>
+                  <th data-sort="stage" style="width:100px">Stage</th>
+                  <th data-sort="gbp1">GBP 1</th>
+                  <th data-sort="gbp2">GBP 2</th>
+                  <th data-sort="gbp3">GBP 3</th>
+                  <th data-sort="recommendation">Rec</th>
+                  <th data-sort="next_action" class="med-col">Next Action</th>
+                  <th data-sort="next_due" style="width:100px">Next Due</th>
+                  <th style="text-align:right; width:140px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <p class="note">Data is secured via RLS. You only see leads assigned to you.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="panel">
+      <div class="hd">
+        <h3 id="modalTitle">Activity & Details</h3>
+        <button class="btn secondary" id="btnCloseModal" style="color:var(--brand)">Close</button>
+      </div>
+      <div class="status-bar">
+        <div class="status-group">
+            <span class="status-label">Status</span>
+            <input id="m_stage" readonly /> </div>
+        <div class="status-group">
+            <span class="status-label">Next Action</span>
+            <select id="m_nextAction">
+                <option value="Call Attempt">Call Attempt</option><option value="Follow-up Email">Follow-up Email</option>
+                <option value="Book 15-min">Book 15-min</option><option value="Confirm 15-min">Confirm 15-min</option>
+                <option value="Sold 48-Hour Fix">Sold 48-Hour Fix</option>
+                <option value="Sold Rev Diagnostic">Sold Rev Diagnostic</option>
+                <option value="Reschedule">Reschedule</option><option value="Nurture">Nurture</option><option value="Disqualify">Disqualify</option>
+            </select>
+        </div>
+      </div>
+      <div class="bd-grid">
+        <div class="modal-col left">
+          <h4 style="margin:0 0 16px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Contact Info</h4>
+          <div class="row modal-grid">
+            <div><label>First Name</label><input id="m_firstName" readonly /></div>
+            <div><label>Last Name</label><input id="m_lastName" readonly /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>Company</label><input id="m_company" readonly /></div>
+            <div><label>Phone</label><input id="m_phone" readonly /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>Email</label><input id="m_email" readonly /></div>
+            <div><label>Website</label><input id="m_website" readonly /></div>
+          </div>
+          
+          <h4 style="margin:20px 0 12px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Diagnostic Data</h4>
+          <div class="row modal-grid">
+            <div><label>GBP 1</label><input id="m_gbp1" /></div>
+            <div><label>GBP 2</label><input id="m_gbp2" /></div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px">
+            <div><label>GBP 3</label><input id="m_gbp3" /></div>
+            <div><label>Recommendation</label><input id="m_recommendation" /></div>
+          </div>
+
+          <h4 style="margin:20px 0 12px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Qualification</h4>
+          <div class="row modal-grid">
+            <div><label>DM Access</label><select id="m_dmAccess"><option value="Unknown">Unknown</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+            <div><label>Leak Type</label><select id="m_leakType"><option value="Unknown">Unknown</option><option value="Response Time">Response Time</option><option value="Missed Calls">Missed Calls</option></select></div>
+          </div>
+          <div class="row one modal-grid" style="margin-top:12px">
+            <div><label>Notes</label><textarea id="m_notes" style="min-height:60px"></textarea></div>
+          </div>
+        </div>
+
+        <div class="modal-col right">
+          <div class="call-controls">
+            <div id="callTimer" class="timer">00:00</div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn success" id="btnCallStart">📞 Call</button>
+              <button class="btn danger" id="btnCallEnd" style="display:none;">End & Log</button>
+            </div>
+          </div>
+          <h4 style="margin:0 0 16px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Call Results</h4>
+          <div class="row one">
+            <div class="modal-grid">
+                <label style="color:var(--ink)">1. Add Log Entry</label>
+                <textarea id="logNote" placeholder="Notes from the call..."></textarea>
+            </div>
+          </div>
+          <div class="row modal-grid" style="margin-top:12px;">
+             <div><label style="color:var(--ink)">Next Due Date</label><input id="m_nextDue" type="datetime-local" /></div>
+          </div>
+          <div class="row" style="margin-top:20px;">
+            <div>
+              <label style="color:var(--ink)">2. Quick Actions</label>
+              <div class="rowactions quick-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px;">
+                <button class="mini" data-stage="Attempting" data-next="Call Attempt">Attempt</button>
+                <button class="mini" data-stage="Connected" data-next="Book 15-min">Connected</button>
+                <button class="mini" data-stage="Booked – 15 Min Diagnostic" data-next="Confirm 15-min">Booked 15m</button>
+                <button class="mini" data-stage="Sold - 48 Hour Fix" data-next="Sold 48-Hour Fix">Sold 48hr</button>
+                <button class="mini" data-stage="No-Show" data-next="Reschedule">No-show</button>
+              </div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:24px; padding-top:16px; border-top:1px solid var(--line);">
+            <button class="btn" id="btnSaveLog" style="width:100%;">Save Log & Next</button>
+          </div>
+          <div class="divider" style="background:var(--line)"></div>
+          <div class="tablewrap" style="max-height:250px; overflow-y:auto; margin-top:0;">
+            <table>
+              <thead><tr><th>Time</th><th>Entry</th></tr></thead>
+              <tbody id="logTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="panel" style="width:min(600px, 95%); height:auto; max-height:90vh; display:block;">
+        <div class="hd">
+            <h3>Create New Lead</h3>
+            <button class="btn secondary" id="btnCloseEdit" style="background:rgba(255,255,255,0.2); color:#fff; border:none;">Close</button>
+        </div>
+        <div class="bd" style="overflow-y:auto;">
+            <form id="createForm">
+                <div class="row">
+                  <div><label>First Name</label><input id="c_firstName" required /></div>
+                  <div><label>Last Name</label><input id="c_lastName" required /></div>
+                </div>
+                <div class="row" style="margin-top:12px">
+                  <div><label>Company</label><input id="c_company" required /></div>
+                  <div><label>Phone</label><input id="c_phone" required /></div>
+                </div>
+                <div class="row" style="margin-top:12px">
+                  <div><label>Email</label><input id="c_email" /></div>
+                  <div><label>City/State</label><input id="c_city" /></div>
+                </div>
+                <div class="actions" style="margin-top:24px">
+                    <button type="submit" class="btn">Create Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><div class="t" id="toastTitle"></div><div class="m" id="toastMsg"></div></div>
+
+  <script>
+    const SUPABASE_URL = 'https://uafnhxcsrrdispsbpuxj.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhZm5oeGNzcnJkaXNwc2JwdXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwOTMwNDYsImV4cCI6MjA4NTY2OTA0Nn0.B5sAP0rE7PVImVWDWlJ2d08y1qZv-rbAlU6WZtbkZRs';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let leads = [];
+    let activeLeadId = null;
+    let currentUser = null;
+    let timerInterval = null, seconds = 0;
+
+    const STAGES = ["New Lead", "Attempting", "Connected", "Booked – 15 Min Diagnostic", "Sold - 48 Hour Fix", "Sold - RLD", "Disqualified", "Nurture"];
+    const $ = (id) => document.getElementById(id);
+    const safe = (v) => (v ?? "").toString().trim();
+    const fmtDT = (iso) => iso ? new Date(iso).toLocaleDateString('en-US', {month:'short', day:'numeric', hour:'numeric'}) : "";
+
+    // Init
+    (async function init() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if(!session) window.location.href = 'index.html';
+        currentUser = session.user;
+        
+        // Populate Filter
+        $("filterStage").innerHTML = `<option value="All">All</option>` + STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
+        
+        fetchLeads();
+    })();
+
+    async function fetchLeads() {
+        const { data, error } = await supabase.from('leads').select('*').order('next_due', { ascending: true });
+        if(error) console.error(error);
+        else {
+            leads = data;
+            render();
+        }
+    }
+
+    function render() {
+        const q = $("search").value.toLowerCase();
+        const stage = $("filterStage").value;
+        
+        let filtered = leads.filter(l => {
+            let match = true;
+            if (stage !== "All" && l.stage !== stage) match = false;
+            if (q && !JSON.stringify(l).toLowerCase().includes(q)) match = false;
+            return match;
+        });
+
+        // Update KPIs
+        const total = filtered.length;
+        const booked = filtered.filter(l => l.stage && l.stage.includes("Booked")).length;
+        $("kpiGrid").innerHTML = `
+            <div class="box"><div class="label">Total Leads</div><div class="value">${total}</div></div>
+            <div class="box"><div class="label">Booked</div><div class="value">${booked}</div></div>
+        `;
+        $("viewStatus").textContent = `View: ${total}`;
+
+        const rows = filtered.map(l => {
+            const name = safe(l.company) || safe(l.last_name);
+            return `
+            <tr>
+                <td class="lead-col">${name}<br><span class="lead-meta">${safe(l.first_name)} ${safe(l.last_name)}</span></td>
+                <td><a href="tel:${safe(l.phone)}">${safe(l.phone)}</a></td>
+                <td>${safe(l.city)}</td>
+                <td><span class="pill stage">${safe(l.stage)}</span></td>
+                <td class="gbp-col">${safe(l.gbp1)}</td>
+                <td class="gbp-col">${safe(l.gbp2)}</td>
+                <td class="gbp-col">${safe(l.gbp3)}</td>
+                <td>${safe(l.recommendation)}</td>
+                <td>${safe(l.next_action)}</td>
+                <td>${fmtDT(l.next_due)}</td>
+                <td style="text-align:right">
+                    <button class="mini primary" onclick="openLead('${l.id}')">Work</button>
+                </td>
+            </tr>`;
+        }).join("");
+        $("tbody").innerHTML = rows || `<tr><td colspan="11" style="padding:20px; text-align:center">No leads found.</td></tr>`;
+    }
+
+    window.openLead = (id) => {
+        activeLeadId = id;
+        const l = leads.find(x => x.id === id);
+        if(!l) return;
+
+        // Populate Modal
+        $("m_firstName").value = l.first_name || "";
+        $("m_lastName").value = l.last_name || "";
+        $("m_company").value = l.company || "";
+        $("m_phone").value = l.phone || "";
+        $("m_email").value = l.email || "";
+        $("m_website").value = l.website || "";
+        $("m_gbp1").value = l.gbp1 || "";
+        $("m_gbp2").value = l.gbp2 || "";
+        $("m_gbp3").value = l.gbp3 || "";
+        $("m_recommendation").value = l.recommendation || "";
+        $("m_notes").value = l.notes || "";
+        $("m_stage").value = l.stage || "";
+        $("m_nextAction").value = l.next_action || "Call Attempt";
+        
+        // Logs
+        const logs = l.activity || [];
+        $("logTbody").innerHTML = logs.map(x => `
+            <tr><td style="font-size:11px; width:120px;">${fmtDT(x.ts)}</td><td><b>${x.action}</b>: ${x.text}</td></tr>
+        `).join("");
+
+        $("modal").classList.add("open");
+        $("modalTitle").textContent = l.company;
+    };
+
+    // Save Log
+    $("btnSaveLog").onclick = async () => {
+        if(!activeLeadId) return;
+        const l = leads.find(x => x.id === activeLeadId);
+        
+        // Updates
+        const updates = {
+            stage: $("m_stage").value,
+            next_action: $("m_nextAction").value,
+            next_due: $("m_nextDue").value ? new Date($("m_nextDue").value).toISOString() : null,
+            notes: $("m_notes").value,
+            recommendation: $("m_recommendation").value,
+            gbp1: $("m_gbp1").value,
+            gbp2: $("m_gbp2").value,
+            gbp3: $("m_gbp3").value,
+            dm_access: $("m_dmAccess").value,
+            leak_type: $("m_leakType").value
+        };
+
+        // Add Log
+        const newLog = {
+            ts: new Date().toISOString(),
+            action: updates.next_action,
+            text: $("logNote").value
+        };
+        const updatedActivity = [newLog, ...(l.activity || [])];
+        updates.activity = updatedActivity;
+
+        const { error } = await supabase.from('leads').update(updates).eq('id', activeLeadId);
+        
+        if(error) alert(error.message);
+        else {
+            showToast("Saved", "Lead updated.");
+            $("logNote").value = "";
+            fetchLeads(); // Refresh local data
+            $("modal").classList.remove("open");
+        }
+    };
+
+    // Create New Lead
+    $("createForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const newLead = {
+            first_name: $("c_firstName").value,
+            last_name: $("c_lastName").value,
+            company: $("c_company").value,
+            phone: $("c_phone").value,
+            email: $("c_email").value,
+            city: $("c_city").value,
+            stage: "New Lead",
+            assigned_to: currentUser.id
+        };
+
+        const { error } = await supabase.from('leads').insert([newLead]);
+        if(error) alert(error.message);
+        else {
+            alert("Lead created!");
+            $("editModal").classList.remove("open");
+            fetchLeads();
+        }
+    };
+
+    // UI Helpers
+    $("btnCreateNew").onclick = () => $("editModal").classList.add("open");
+    $("btnCloseModal").onclick = () => $("modal").classList.remove("open");
+    $("btnCloseEdit").onclick = () => $("editModal").classList.remove("open");
+    $("search").oninput = render;
+    $("filterStage").onchange = render;
+    
+    // Quick Actions in Modal
+    document.querySelectorAll(".quick-actions button").forEach(btn => {
+        btn.onclick = (e) => {
+            $("m_stage").value = e.target.dataset.stage;
+            $("m_nextAction").value = e.target.dataset.next;
+        }
+    });
+
+    // Call Timer
+    $("btnCallStart").onclick = () => {
+        const phone = $("m_phone").value;
+        if(phone) window.location.href = `tel:${phone}`;
+        $("callTimer").classList.add("active");
+        $("btnCallStart").style.display = "none";
+        $("btnCallEnd").style.display = "block";
+        seconds = 0;
+        timerInterval = setInterval(() => {
+            seconds++;
+            $("callTimer").textContent = new Date(seconds * 1000).toISOString().substr(14, 5);
+        }, 1000);
+    };
+
+    $("btnCallEnd").onclick = () => {
+        clearInterval(timerInterval);
+        $("callTimer").classList.remove("active");
+        $("btnCallStart").style.display = "block";
+        $("btnCallEnd").style.display = "none";
+        $("logNote").value = `[Call Duration: ${$("callTimer").textContent}] ` + $("logNote").value;
+    };
+
+    $("btnLogout").onclick = async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+    };
+
+    function showToast(t, m) {
+        const toast = $("toast");
+        $("toastTitle").innerText = t;
+        $("toastMsg").innerText = m;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+  </script>
+</body>
+</html>
